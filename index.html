@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drag & Zoom Thumbnail Index</title>
+    <title>Drag & Zoom Thumbnail Index with Modal</title>
     <style>
         /* All CSS is included here */
         body, html {
@@ -82,6 +82,95 @@
             font-size: 0.9rem;
             z-index: 500; 
         }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); 
+            backdrop-filter: blur(8px); 
+            -webkit-backdrop-filter: blur(8px); 
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000; 
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background-color: #374151;
+            padding: 30px;
+            border-radius: 16px;
+            position: relative;
+            max-width: 90vw; 
+            width: auto;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            box-shadow: 0 0 70px rgba(0,0,0,0.5);
+        }
+        
+        @media (min-width: 768px) {
+            .modal-content {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .modal-image-container {
+            flex-shrink: 0;
+            margin-bottom: 20px;
+        }
+         @media (min-width: 768px) {
+            .modal-image-container {
+                 flex-basis: 55%;
+                 margin-right: 30px;
+                 margin-bottom: 0;
+            }
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 75vh;
+            object-fit: contain;
+            border-radius: 12px;
+            display: block;
+        }
+        
+        .modal-description-container {
+            flex-grow: 1;
+            max-height: 75vh; 
+            overflow-y: auto;
+            padding-right: 10px;
+            width: 100%;
+        }
+         @media (min-width: 768px) {
+            .modal-description-container {
+                width: auto;
+            }
+        }
+
+        .modal-content p {
+            font-size: 1rem; 
+            color: #d1d5db;
+            line-height: 1.6;
+            text-align: left;
+            margin: 0;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2.2rem;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+        .close-button:hover { color: #f3f4f6; }
     </style>
 </head>
 <body>
@@ -91,184 +180,47 @@
         </div>
     </div>
 
-    <div class="info-text">Click & Drag to Pan | Scroll to Zoom | Click Poster to Navigate</div>
+    <div class="modal-overlay" id="posterModal">
+        <div class="modal-content">
+            <span class="close-button" id="closeModalButton">&times;</span>
+            <div class="modal-image-container">
+                <img src="" alt="Artwork Close-up" id="modalImage">
+            </div>
+            <div class="modal-description-container">
+                 <p id="modalDescription"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-text">Click & Drag to Pan | Scroll to Zoom | Click Poster for Details</div>
     
     <script>
         const viewport = document.getElementById('gallery-viewport');
         const canvas = document.getElementById('gallery-canvas');
+        const modalOverlay = document.getElementById('posterModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalDescription = document.getElementById('modalDescription');
+        const closeModalButton = document.getElementById('closeModalButton');
         
-        // Gallery data is now populated with your Cargo URLs
         const postersData = [
             {
                 id: '01',
                 imgSrc: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png', 
-                pageUrl: '/01',
-                title: '01-title'
+                imgSrcFull: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png', // Assuming full-size is same as thumb for this one
+                description: '01 Title - This is a short paragraph describing the first piece of artwork.'
             },
             {
                 id: '02',
                 imgSrc: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png', 
-                pageUrl: '/02', 
-                title: '02-title' 
+                imgSrcFull: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png',
+                description: '02 Title - A piece inspired by traditional Korean folk art.'
             },
            {
                 id: '03',
                 imgSrc: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png', 
-                pageUrl: '/03', 
-                title: '03' 
+                imgSrcFull: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png',
+                description: '03 Title - Exploring themes of journeys and the paths we take.'
             },
              {
                 id: '04',
-                imgSrc: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', 
-                pageUrl: '/04', 
-                title: '04' 
-            },
-            {
-                id: '05',
-                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', 
-                pageUrl: '/05', 
-                title: '05' 
-            }
-        ];
-        
-        let isDragging = false;
-        let dragStartX, dragStartY; 
-        let currentX = 0, currentY = 0; 
-        let targetX = 0, targetY = 0; 
-        let scale = 0.01; 
-        let targetScale = 0.01; 
-        const minScale = 0.1; 
-        const maxScale = 3;
-        const zoomSensitivity = 0.0015; 
-        const easingFactor = 0.08; 
-        let clickStartPos = { x: 0, y: 0 }; 
-
-        let initialAnimationDone = false;
-        const initialTargetScale = 0.8; 
-        const initialAnimationSpeedFactor = 0.03; 
-
-        const posterWidth = 200;
-        const posterHeight = 300;
-        const gap = 80; 
-        const numPosters = postersData.length;
-        const itemsPerRow = Math.ceil(Math.sqrt(numPosters)); 
-        const canvasContentWidth = itemsPerRow * (posterWidth + gap) - gap; 
-        const canvasContentHeight = Math.ceil(numPosters / itemsPerRow) * (posterHeight + gap) - gap; 
-
-        function initialize() {
-            if (!viewport || !canvas) {
-                console.error("Gallery viewport or canvas element not found.");
-                return;
-            }
-
-            targetX = currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
-            targetY = currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
-            
-            postersData.forEach((data, index) => {
-                const posterElement = document.createElement('div');
-                posterElement.classList.add('poster-item');
-                const col = index % itemsPerRow;
-                const row = Math.floor(index / itemsPerRow);
-                posterElement.style.left = `${col * (posterWidth + gap)}px`;
-                posterElement.style.top = `${row * (posterHeight + gap)}px`;
-                const imgElement = document.createElement('img');
-                imgElement.src = data.imgSrc;
-                imgElement.alt = data.title || `Thumbnail for ${data.id}`;
-                imgElement.loading = 'lazy';
-                imgElement.onerror = function() {
-                    this.src = `https://placehold.co/200x300/ccc/333?text=Error`;
-                };
-                posterElement.appendChild(imgElement);
-                canvas.appendChild(posterElement);
-
-                posterElement.addEventListener('click', (e) => {
-                    if (initialAnimationDone) { 
-                        const distDragged = Math.sqrt(Math.pow(e.clientX - clickStartPos.x, 2) + Math.pow(e.clientY - clickStartPos.y, 2));
-                        if (distDragged > 5) return;
-                        if (data.pageUrl && data.pageUrl !== '#') window.location.href = data.pageUrl;
-                    }
-                });
-            });
-            
-            animationLoop(); 
-
-            viewport.addEventListener('mousedown', (e) => {
-                if (!initialAnimationDone) return; 
-                isDragging = true;
-                dragStartX = e.clientX; 
-                dragStartY = e.clientY;
-                clickStartPos = { x: e.clientX, y: e.clientY }; 
-                viewport.style.cursor = 'grabbing';
-            });
-
-            viewport.addEventListener('mousemove', (e) => {
-                if (!isDragging || !initialAnimationDone) return;
-                e.preventDefault(); 
-                const dx = e.clientX - dragStartX;
-                const dy = e.clientY - dragStartY;
-                targetX += dx;
-                targetY += dy;
-                dragStartX = e.clientX; 
-                dragStartY = e.clientY;
-            });
-
-            const stopDragging = () => { if (isDragging) { isDragging = false; viewport.style.cursor = 'grab'; } };
-            viewport.addEventListener('mouseup', stopDragging);
-            viewport.addEventListener('mouseleave', stopDragging); 
-
-            viewport.addEventListener('wheel', (e) => {
-                if (!initialAnimationDone) return; 
-                e.preventDefault(); 
-                const rect = viewport.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
-                const mouseCanvasX = (mouseX - currentX) / scale;
-                const mouseCanvasY = (mouseY - currentY) / scale;
-                const delta = e.deltaY * zoomSensitivity * -1; 
-                let newScaleAttempt = targetScale + delta * targetScale; 
-                newScaleAttempt = Math.max(minScale, Math.min(maxScale, newScaleAttempt));
-                targetX = mouseX - mouseCanvasX * newScaleAttempt;
-                targetY = mouseY - mouseCanvasY * newScaleAttempt;
-                targetScale = newScaleAttempt; 
-            });
-        }
-        
-        function applyTransform() {
-            if(canvas) canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
-        }
-        
-        function animationLoop() {
-            if (!initialAnimationDone) {
-                scale += (initialTargetScale - scale) * initialAnimationSpeedFactor;
-                targetScale = scale; 
-                currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
-                currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
-                targetX = currentX;
-                targetY = currentY;
-                if (Math.abs(scale - initialTargetScale) < 0.001) {
-                    scale = initialTargetScale;
-                    targetScale = initialTargetScale;
-                    initialAnimationDone = true;
-                    targetX = currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
-                    targetY = currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
-                }
-            } else {
-                currentX += (targetX - currentX) * easingFactor;
-                currentY += (targetY - currentY) * easingFactor;
-                scale += (targetScale - scale) * easingFactor;
-                if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
-                if (Math.abs(targetY - currentY) < 0.1) currentY = targetY;
-                if (Math.abs(targetScale - scale) < 0.001) scale = targetScale;
-            }
-            applyTransform();
-            requestAnimationFrame(animationLoop);
-        }
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initialize);
-        } else {
-            initialize();
-        }
-    </script>
-</body>
-</html>
+                imgSrc: 'https://freight.cargo.site
