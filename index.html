@@ -223,4 +223,176 @@
             },
              {
                 id: '04',
-                imgSrc: 'https://freight.cargo.site
+                imgSrc: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', 
+                imgSrcFull: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png',
+                description: '04 Title - Capturing the motion and elegance of traditional dance.'
+            },
+            {
+                id: '05',
+                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', 
+                imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
+                description: '05 Title - A depiction of morning magpies, symbols of good fortune.'
+            }
+        ];
+        
+        let isDragging = false;
+        let dragStartX, dragStartY; 
+        let currentX = 0, currentY = 0; 
+        let targetX = 0, targetY = 0; 
+        let scale = 0.01; 
+        let targetScale = 0.01; 
+        const minScale = 0.1; 
+        const maxScale = 3;
+        const zoomSensitivity = 0.0015; 
+        const easingFactor = 0.08; 
+        let clickStartPos = { x: 0, y: 0 }; 
+
+        let initialAnimationDone = false;
+        const initialTargetScale = 0.8; 
+        const initialAnimationSpeedFactor = 0.03; 
+
+        const posterWidth = 200;
+        const posterHeight = 300;
+        const gap = 80; 
+        const numPosters = postersData.length;
+        const itemsPerRow = Math.ceil(Math.sqrt(numPosters)); 
+        const canvasContentWidth = itemsPerRow * (posterWidth + gap) - gap; 
+        const canvasContentHeight = Math.ceil(numPosters / itemsPerRow) * (posterHeight + gap) - gap; 
+
+        function initialize() {
+            if (!viewport || !canvas) {
+                console.error("Gallery viewport or canvas element not found.");
+                return;
+            }
+
+            targetX = currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
+            targetY = currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
+            
+            postersData.forEach((data, index) => {
+                const posterElement = document.createElement('div');
+                posterElement.classList.add('poster-item');
+                const col = index % itemsPerRow;
+                const row = Math.floor(index / itemsPerRow);
+                posterElement.style.left = `${col * (posterWidth + gap)}px`;
+                posterElement.style.top = `${row * (posterHeight + gap)}px`;
+                const imgElement = document.createElement('img');
+                imgElement.src = data.imgSrc;
+                imgElement.alt = data.description.substring(0, 50);
+                imgElement.loading = 'lazy';
+                imgElement.onerror = function() {
+                    this.src = `https://placehold.co/200x300/ccc/333?text=Error`;
+                };
+                posterElement.appendChild(imgElement);
+                canvas.appendChild(posterElement);
+
+                posterElement.addEventListener('click', (e) => {
+                    if (initialAnimationDone) { 
+                        const distDragged = Math.sqrt(Math.pow(e.clientX - clickStartPos.x, 2) + Math.pow(e.clientY - clickStartPos.y, 2));
+                        if (distDragged > 5) return;
+                        
+                        modalImage.src = data.imgSrcFull;
+                        modalImage.onerror = function() {
+                            this.src = `https://placehold.co/800x1200/ccc/333?text=Error`;
+                        };
+                        modalDescription.textContent = data.description;
+                        modalOverlay.style.display = 'flex';
+                    }
+                });
+            });
+            
+            animationLoop(); 
+
+            viewport.addEventListener('mousedown', (e) => {
+                if (!initialAnimationDone) return; 
+                isDragging = true;
+                dragStartX = e.clientX; 
+                dragStartY = e.clientY;
+                clickStartPos = { x: e.clientX, y: e.clientY }; 
+                viewport.style.cursor = 'grabbing';
+            });
+
+            viewport.addEventListener('mousemove', (e) => {
+                if (!isDragging || !initialAnimationDone) return;
+                e.preventDefault(); 
+                const dx = e.clientX - dragStartX;
+                const dy = e.clientY - dragStartY;
+                targetX += dx;
+                targetY += dy;
+                dragStartX = e.clientX; 
+                dragStartY = e.clientY;
+            });
+
+            const stopDragging = () => { if (isDragging) { isDragging = false; viewport.style.cursor = 'grab'; } };
+            viewport.addEventListener('mouseup', stopDragging);
+            viewport.addEventListener('mouseleave', stopDragging); 
+
+            viewport.addEventListener('wheel', (e) => {
+                if (!initialAnimationDone) return; 
+                e.preventDefault(); 
+                const rect = viewport.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const mouseCanvasX = (mouseX - currentX) / scale;
+                const mouseCanvasY = (mouseY - currentY) / scale;
+                const delta = e.deltaY * zoomSensitivity * -1; 
+                let newScaleAttempt = targetScale + delta * targetScale; 
+                newScaleAttempt = Math.max(minScale, Math.min(maxScale, newScaleAttempt));
+                targetX = mouseX - mouseCanvasX * newScaleAttempt;
+                targetY = mouseY - mouseCanvasY * newScaleAttempt;
+                targetScale = newScaleAttempt; 
+            });
+
+            closeModalButton.addEventListener('click', () => {
+                modalOverlay.style.display = 'none';
+            });
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    modalOverlay.style.display = 'none';
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
+                    modalOverlay.style.display = 'none';
+                }
+            });
+        }
+        
+        function applyTransform() {
+            if(canvas) canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
+        }
+        
+        function animationLoop() {
+            if (!initialAnimationDone) {
+                scale += (initialTargetScale - scale) * initialAnimationSpeedFactor;
+                targetScale = scale; 
+                currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
+                currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
+                targetX = currentX;
+                targetY = currentY;
+                if (Math.abs(scale - initialTargetScale) < 0.001) {
+                    scale = initialTargetScale;
+                    targetScale = initialTargetScale;
+                    initialAnimationDone = true;
+                    targetX = currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
+                    targetY = currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
+                }
+            } else {
+                currentX += (targetX - currentX) * easingFactor;
+                currentY += (targetY - currentY) * easingFactor;
+                scale += (targetScale - scale) * easingFactor;
+                if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
+                if (Math.abs(targetY - currentY) < 0.1) currentY = targetY;
+                if (Math.abs(targetScale - scale) < 0.001) scale = targetScale;
+            }
+            applyTransform();
+            requestAnimationFrame(animationLoop);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+        } else {
+            initialize();
+        }
+    </script>
+</body>
+</html>
