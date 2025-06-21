@@ -52,13 +52,13 @@
             overflow: hidden;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
             cursor: pointer;
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            /* Smoother hover transition */
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             display: flex; 
             justify-content: center;
             align-items: center;
             user-select: none; 
             opacity: 1;
-            transition: opacity 0.3s ease-in-out; 
         }
 
         .poster-item:hover {
@@ -250,7 +250,7 @@
         const minScale = 0.1; 
         const maxScale = 3;
         const zoomSensitivity = 0.0015; 
-        const easingFactor = 0.08; 
+        const easingFactor = 0.15; /* Increased from 0.08 for faster response */
         let clickStartPos = { x: 0, y: 0 }; 
 
         let initialPinchDistance = 0;
@@ -268,13 +268,11 @@
         function initialize() {
             if (!viewport || !canvas) { return; }
 
-            // Set initial targets for the animation
             const initialTargetScale = 0.8; 
             targetScale = initialTargetScale;
             targetX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * initialTargetScale);
             targetY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * initialTargetScale);
 
-            // Start with a more zoomed-out view for a dramatic effect
             scale = 0.01;
             currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
             currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
@@ -426,18 +424,16 @@
         }
         
         function animationLoop() {
-            // Unifying the animation logic
             currentX += (targetX - currentX) * easingFactor;
             currentY += (targetY - currentY) * easingFactor;
             scale += (targetScale - scale) * easingFactor;
             
-            // Snap to target if very close to prevent endless tiny movements
             if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
             if (Math.abs(targetY - currentY) < 0.1) currentY = targetY;
             if (Math.abs(targetScale - scale) < 0.001) scale = targetScale;
             
             applyTransform();
-            renderVisiblePosters(); // Always render posters
+            renderVisiblePosters();
             requestAnimationFrame(animationLoop);
         }
         
