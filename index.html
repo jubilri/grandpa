@@ -20,8 +20,8 @@
         #gallery-viewport {
             position: fixed;
             top: 0; left: 0; 
-            width: 100%; 
-            height: 100%;
+            width: 100vw; /* Use viewport width unit for robustness */
+            height: 100vh; /* Use viewport height unit for robustness */
             cursor: grab; 
             overflow: hidden; 
             user-select: none; 
@@ -205,51 +205,51 @@
         const modalDescription = document.getElementById('modalDescription');
         const closeModalButton = document.getElementById('closeModalButton');
         
-        // Data structure updated to include full-size image and description for the modal
-        const postersData = [
+        // Base data for your original posters
+        const basePosters = [
             {
-                id: '01',
+                baseId: '01',
                 imgSrc: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png', 
                 imgSrcFull: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png',
                 description: '01 Title - This is a short paragraph describing the first piece of artwork.'
             },
             {
-                id: '02',
+                baseId: '02',
                 imgSrc: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png', 
                 imgSrcFull: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png',
                 description: '02 Title - A piece inspired by traditional Korean folk art.'
             },
            {
-                id: '03',
+                baseId: '03',
                 imgSrc: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png', 
                 imgSrcFull: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png',
                 description: '03 Title - Exploring themes of journeys and the paths we take.'
             },
              {
-                id: '04',
+                baseId: '04',
                 imgSrc: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', 
                 imgSrcFull: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png',
                 description: '04 Title - Capturing the motion and elegance of traditional dance.'
             },
             {
-                id: '05',
+                baseId: '05',
                 imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', 
                 imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
                 description: '05 Title - A depiction of morning magpies, symbols of good fortune.'
-            },
-            {
-                id: '06',
-                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
-                description: '06 Title - This is another piece in the series.'
-            },
-            {
-                id: '07',
-                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
-                description: '07 Title - The final piece in this collection.'
             }
         ];
+
+        // Create the final postersData array with 30 items
+        const postersData = [];
+        for (let i = 0; i < 30; i++) {
+            const randomPoster = basePosters[Math.floor(Math.random() * basePosters.length)];
+            postersData.push({
+                id: `poster-${i + 1}`,
+                imgSrc: randomPoster.imgSrc,
+                imgSrcFull: randomPoster.imgSrcFull,
+                description: `Poster ${i + 1}: ${randomPoster.description}`
+            });
+        }
         
         let isDragging = false;
         let dragStartX, dragStartY; 
