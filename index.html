@@ -57,7 +57,6 @@
             justify-content: center;
             align-items: center;
             user-select: none; 
-            /* Added for smooth appearance/disappearance */
             opacity: 1;
             transition: opacity 0.3s ease-in-out; 
         }
@@ -254,11 +253,6 @@
         const easingFactor = 0.08; 
         let clickStartPos = { x: 0, y: 0 }; 
 
-        let initialAnimationDone = false;
-        const initialTargetScale = 0.8; 
-        const initialAnimationSpeedFactor = 0.03; 
-
-        // --- Touch specific variables ---
         let initialPinchDistance = 0;
         let lastTouchX = 0;
         let lastTouchY = 0;
@@ -274,14 +268,20 @@
         function initialize() {
             if (!viewport || !canvas) { return; }
 
-            targetX = currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
-            targetY = currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
-            
+            // Set initial targets for the animation
+            const initialTargetScale = 0.8; 
+            targetScale = initialTargetScale;
+            targetX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * initialTargetScale);
+            targetY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * initialTargetScale);
+
+            // Start with a more zoomed-out view for a dramatic effect
+            scale = 0.01;
+            currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
+            currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
+
             animationLoop(); 
 
-            // Mouse Events
             viewport.addEventListener('mousedown', (e) => {
-                if (!initialAnimationDone) return; 
                 isDragging = true;
                 dragStartX = e.clientX; 
                 dragStartY = e.clientY;
@@ -290,7 +290,7 @@
             });
 
             viewport.addEventListener('mousemove', (e) => {
-                if (!isDragging || !initialAnimationDone) return;
+                if (!isDragging) return;
                 e.preventDefault(); 
                 const dx = e.clientX - dragStartX;
                 const dy = e.clientY - dragStartY;
@@ -305,7 +305,6 @@
             viewport.addEventListener('mouseleave', stopDragging); 
 
             viewport.addEventListener('wheel', (e) => {
-                if (!initialAnimationDone) return; 
                 e.preventDefault(); 
                 const rect = viewport.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left;
@@ -320,27 +319,23 @@
                 targetScale = newScaleAttempt; 
             });
             
-            // --- Touch Events ---
             viewport.addEventListener('touchstart', (e) => {
-                if (!initialAnimationDone) return;
                 const touches = e.touches;
-                if (touches.length === 1) { // Pan
+                if (touches.length === 1) {
                     isDragging = true;
                     lastTouchX = touches[0].clientX;
                     lastTouchY = touches[0].clientY;
-                    clickStartPos = { x: lastTouchX, y: lastTouchY }; // For tap detection
-                } else if (touches.length === 2) { // Zoom
-                    isDragging = false; // Disable panning when zooming
+                    clickStartPos = { x: lastTouchX, y: lastTouchY }; 
+                } else if (touches.length === 2) { 
+                    isDragging = false; 
                     initialPinchDistance = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
                 }
             }, { passive: true });
 
             viewport.addEventListener('touchmove', (e) => {
-                if (!initialAnimationDone) return;
                 e.preventDefault();
                 const touches = e.touches;
-
-                if (touches.length === 1 && isDragging) { // Pan
+                if (touches.length === 1 && isDragging) {
                     const touchX = touches[0].clientX;
                     const touchY = touches[0].clientY;
                     const dx = touchX - lastTouchX;
@@ -349,31 +344,26 @@
                     targetY += dy;
                     lastTouchX = touchX;
                     lastTouchY = touchY;
-                } else if (touches.length === 2) { // Zoom
+                } else if (touches.length === 2) { 
                     const newPinchDistance = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
                     const rect = viewport.getBoundingClientRect();
                     const touchMidpointX = (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
                     const touchMidpointY = (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
-
                     const mouseCanvasX = (touchMidpointX - currentX) / scale;
                     const mouseCanvasY = (touchMidpointY - currentY) / scale;
-                    
                     const scaleFactor = newPinchDistance / initialPinchDistance;
                     let newScaleAttempt = targetScale * scaleFactor;
                     newScaleAttempt = Math.max(minScale, Math.min(maxScale, newScaleAttempt));
-                    
                     targetX = touchMidpointX - mouseCanvasX * newScaleAttempt;
                     targetY = touchMidpointY - mouseCanvasY * newScaleAttempt;
                     targetScale = newScaleAttempt;
-                    
-                    initialPinchDistance = newPinchDistance; // Update for continuous zoom
+                    initialPinchDistance = newPinchDistance;
                 }
             }, { passive: false });
             
             const stopTouch = () => { isDragging = false; initialPinchDistance = 0; };
             viewport.addEventListener('touchend', stopTouch);
             viewport.addEventListener('touchcancel', stopTouch);
-
 
             closeModalButton.addEventListener('click', () => { modalOverlay.style.display = 'none'; });
             modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.style.display = 'none'; });
@@ -436,30 +426,18 @@
         }
         
         function animationLoop() {
-            if (!initialAnimationDone) {
-                scale += (initialTargetScale - scale) * initialAnimationSpeedFactor;
-                targetScale = scale; 
-                currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
-                currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
-                targetX = currentX;
-                targetY = currentY;
-                if (Math.abs(scale - initialTargetScale) < 0.001) {
-                    scale = initialTargetScale;
-                    targetScale = initialTargetScale;
-                    initialAnimationDone = true;
-                    targetX = currentX = (viewport.offsetWidth / 2) - (canvasContentWidth / 2 * scale);
-                    targetY = currentY = (viewport.offsetHeight / 2) - (canvasContentHeight / 2 * scale);
-                }
-            } else {
-                currentX += (targetX - currentX) * easingFactor;
-                currentY += (targetY - currentY) * easingFactor;
-                scale += (targetScale - scale) * easingFactor;
-                if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
-                if (Math.abs(targetY - currentY) < 0.1) currentY = targetY;
-                if (Math.abs(targetScale - scale) < 0.001) scale = targetScale;
-            }
+            // Unifying the animation logic
+            currentX += (targetX - currentX) * easingFactor;
+            currentY += (targetY - currentY) * easingFactor;
+            scale += (targetScale - scale) * easingFactor;
+            
+            // Snap to target if very close to prevent endless tiny movements
+            if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
+            if (Math.abs(targetY - currentY) < 0.1) currentY = targetY;
+            if (Math.abs(targetScale - scale) < 0.001) scale = targetScale;
+            
             applyTransform();
-            if (initialAnimationDone) renderVisiblePosters();
+            renderVisiblePosters(); // Always render posters
             requestAnimationFrame(animationLoop);
         }
         
