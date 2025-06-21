@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drag & Zoom Thumbnail Index with Modal</title>
+    <title>Drag & Zoom Thumbnail Index</title>
     <style>
         /* All CSS is included here */
         body, html {
             font-family: 'Inter', sans-serif;
             margin: 0;
-            padding: 0;  
+            padding: 0; 
             background-color: #000000;
             color: #f3f4f6;
             overflow: hidden; 
             overscroll-behavior: none; 
-             height: 100vh;
+            height: 100vh;
             width: 100vw;
         }
 
         #gallery-viewport {
             position: fixed;
             top: 0; left: 0; 
-             width: 100%; 
+            width: 100%; 
             height: 100%;
             cursor: grab; 
             overflow: hidden; 
@@ -85,174 +85,65 @@
             font-size: 0.9rem;
             z-index: 500; 
         }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000; 
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .modal-content {
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 30px;
-            border-radius: 16px;
-            position: relative;
-            max-width: 90vw; 
-            width: auto;
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column; 
-            align-items: center; 
-            box-shadow: 0 0 70px rgba(0,0,0,0.5);
-        }
-        
-        @media (min-width: 768px) {
-            .modal-content {
-                flex-direction: row;
-                align-items: flex-start;
-            }
-        }
-
-        .modal-image-container {
-            flex-shrink: 0;
-            margin-bottom: 20px;
-        }
-         @media (min-width: 768px) {
-            .modal-image-container {
-                 flex-basis: 55%;
-                 margin-right: 30px;
-                 margin-bottom: 0;
-            }
-        }
-
-        .modal-content img {
-            max-width: 100%;
-            max-height: 75vh;
-            object-fit: contain;
-            border-radius: 12px;
-            display: block;
-        }
-        
-        .modal-description-container {
-            flex-grow: 1;
-            max-height: 75vh; 
-            overflow-y: auto;
-            padding-right: 10px;
-            width: 100%;
-        }
-         @media (min-width: 768px) {
-            .modal-description-container {
-                width: auto;
-            }
-        }
-
-        .modal-content p {
-            font-size: 1rem; 
-            color: #d1d5db;
-            line-height: 1.6;
-            text-align: left;
-            margin: 0;
-        }
-
-        .close-button {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            font-size: 2.2rem;
-            color: #9ca3af;
-            cursor: pointer;
-            transition: color 0.2s;
-            z-index: 10;
-        }
-        .close-button:hover { color: #f3f4f6; }
     </style>
 </head>
 <body>
     <div id="gallery-viewport">
         <div id="gallery-canvas">
-            <!-- Posters (Thumbnails) will be dynamically added here -->
+            <!-- Posters (Thumbnails) are created and added here by the script -->
         </div>
     </div>
 
-    <div class="modal-overlay" id="posterModal">
-        <div class="modal-content">
-            <span class="close-button" id="closeModalButton">&times;</span>
-            <div class="modal-image-container">
-                <img src="" alt="Artwork Close-up" id="modalImage">
-            </div>
-            <div class="modal-description-container">
-                 <p id="modalDescription"></p>
-            </div>
-        </div>
-    </div>
-
-    <div class="info-text">Click & Drag to Pan | Scroll to Zoom | Click Poster for Details</div>
+    <div class="info-text">Click & Drag to Pan | Scroll to Zoom | Click Poster to Navigate</div>
     
     <script>
         const viewport = document.getElementById('gallery-viewport');
         const canvas = document.getElementById('gallery-canvas');
-        const modalOverlay = document.getElementById('posterModal');
-        const modalImage = document.getElementById('modalImage');
-        const modalDescription = document.getElementById('modalDescription');
-        const closeModalButton = document.getElementById('closeModalButton');
         
+        // Corrected data structure
         const postersData = [
             {
                 id: '01',
                 imgSrc: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png',
-                description: '01 Title - This is a short paragraph describing the first piece of artwork.'
+                pageUrl: '/01',
+                title: '01-title'
             },
             {
                 id: '02',
                 imgSrc: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png',
-                description: '02 Title - A piece inspired by traditional Korean folk art.'
+                pageUrl: '/02', 
+                title: '02-title' 
             },
            {
                 id: '03',
                 imgSrc: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png',
-                description: '03 Title - Exploring themes of journeys and the paths we take.'
+                pageUrl: '/03', 
+                title: '03' 
             },
              {
                 id: '04',
                 imgSrc: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png',
-                description: '04 Title - Capturing the motion and elegance of traditional dance.'
+                pageUrl: '/04', 
+                title: '04' 
             },
             {
                 id: '05',
                 imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
-                description: '05 Title - A depiction of morning magpies, symbols of good fortune.'
-            }
-
+                pageUrl: '/05', 
+                title: '05' 
+            },
             {
                 id: '06',
-                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
-                description: '05 Title - A depiction of morning magpies, symbols of good fortune.'
-            }
-
-        {
+                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', // Note: Using same image as placeholder
+                pageUrl: '/06', 
+                title: '06' 
+            },
+            {
                 id: '07',
-                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', 
-                imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png',
-                description: '05 Title - A depiction of morning magpies, symbols of good fortune.'
+                imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', // Note: Using same image as placeholder
+                pageUrl: '/07', 
+                title: '07' 
             }
-
-        
         ];
         
         let isDragging = false;
@@ -297,7 +188,7 @@
                 posterElement.style.top = `${row * (posterHeight + gap)}px`;
                 const imgElement = document.createElement('img');
                 imgElement.src = data.imgSrc;
-                imgElement.alt = data.description.substring(0, 50);
+                imgElement.alt = data.title || `Thumbnail for ${data.id}`;
                 imgElement.loading = 'lazy';
                 imgElement.onerror = function() {
                     this.src = `https://placehold.co/200x300/ccc/333?text=Error`;
@@ -309,13 +200,7 @@
                     if (initialAnimationDone) { 
                         const distDragged = Math.sqrt(Math.pow(e.clientX - clickStartPos.x, 2) + Math.pow(e.clientY - clickStartPos.y, 2));
                         if (distDragged > 5) return;
-                        
-                        modalImage.src = data.imgSrcFull;
-                        modalImage.onerror = function() {
-                            this.src = `https://placehold.co/800x1200/ccc/333?text=Error`;
-                        };
-                        modalDescription.textContent = data.description;
-                        modalOverlay.style.display = 'flex';
+                        if (data.pageUrl && data.pageUrl !== '#') window.location.href = data.pageUrl;
                     }
                 });
             });
@@ -360,20 +245,6 @@
                 targetX = mouseX - mouseCanvasX * newScaleAttempt;
                 targetY = mouseY - mouseCanvasY * newScaleAttempt;
                 targetScale = newScaleAttempt; 
-            });
-
-            closeModalButton.addEventListener('click', () => {
-                modalOverlay.style.display = 'none';
-            });
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) {
-                    modalOverlay.style.display = 'none';
-                }
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modalOverlay.style.display === 'flex') {
-                    modalOverlay.style.display = 'none';
-                }
             });
         }
         
