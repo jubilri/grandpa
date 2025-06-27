@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drag & Zoom Thumbnail Index with Modal (Optimized)</title>
+    <title>Drag & Zoom Thumbnail Index with Modal</title>
     <style>
         /* All CSS is included here */
         body, html {
@@ -52,13 +52,12 @@
             overflow: hidden;
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
             cursor: pointer;
-            /* Smoother hover transition */
+            /* Updated for a smoother hover animation */
             transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             display: flex; 
             justify-content: center;
             align-items: center;
             user-select: none; 
-            opacity: 1;
         }
 
         .poster-item:hover {
@@ -102,7 +101,8 @@
         }
 
         .modal-content {
-            background-color: rgba(0, 0, 0, 0.7);
+            /* Changed background to be more transparent */
+            background-color: rgba(0, 0, 0, 0.5); 
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -182,7 +182,7 @@
 <body>
     <div id="gallery-viewport">
         <div id="gallery-canvas">
-            <!-- Posters are now created on the fly by the virtualization script -->
+            <!-- Posters (Thumbnails) are created and added here by the script -->
         </div>
     </div>
 
@@ -198,7 +198,7 @@
         </div>
     </div>
 
-    <div class="info-text">Drag to Pan | Pinch or Scroll to Zoom | Tap Poster for Details</div>
+    <div class="info-text">Click & Drag to Pan | Scroll to Zoom | Click Poster for Details</div>
     
     <script>
         const viewport = document.getElementById('gallery-viewport');
@@ -210,10 +210,10 @@
         
         const postersData = [
             { id: '01', imgSrc: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/C2349393727500642387997386282962/image-4.png', description: '01 Title - This is a short paragraph describing the first piece of artwork.' },
-            { id: '02', imgSrc: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png', description: '02 Title - A piece inspired by traditional Korean folk art.' },
-            { id: '03', imgSrc: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png', description: '03 Title - Exploring themes of journeys and the paths we take.' },
-            { id: '04', imgSrc: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', description: '04 Title - Capturing the motion and elegance of traditional dance.' },
-            { id: '05', imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', description: '05 Title - A depiction of morning magpies, symbols of good fortune.' },
+            { id: '02', imgSrc: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/C2350390830354182790371201718226/1-koreanfolkpainting.png', description: '02 Title - .' },
+            { id: '03', imgSrc: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/V2350392438098609278600882362322/2-shoes.png', description: '03 Title - .' },
+            { id: '04', imgSrc: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/A2350393620239756498203788122066/3-fandance.png', description: '04 Title - .' },
+            { id: '05', imgSrc: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', imgSrcFull: 'https://freight.cargo.site/t/original/i/N2350394133870898486572543317970/4-morningMagpiesinKorea.png', description: '05 Title - ' },
             { id: '06', imgSrc: 'https://placehold.co/200x300/6A0DAD/fff?text=P6&font=inter', imgSrcFull: 'https://placehold.co/800x1200/6A0DAD/fff?text=P6&font=inter', description: '06 Title - Description for poster 6.' },
             { id: '07', imgSrc: 'https://placehold.co/200x300/00A36C/fff?text=P7&font=inter', imgSrcFull: 'https://placehold.co/800x1200/00A36C/fff?text=P7&font=inter', description: '07 Title - Description for poster 7.' },
             { id: '08', imgSrc: 'https://placehold.co/200x300/FFD700/000?text=P8&font=inter', imgSrcFull: 'https://placehold.co/800x1200/FFD700/000?text=P8&font=inter', description: '08 Title - Description for poster 8.' },
@@ -250,9 +250,13 @@
         const minScale = 0.1; 
         const maxScale = 3;
         const zoomSensitivity = 0.0015; 
-        const easingFactor = 0.15; /* Increased from 0.08 for faster response */
-        let clickStartPos = { x: 0, y: 0 }; 
+        const easingFactor = 0.15; 
+        
+        // --- SPEED CONTROL FOR INTRO ANIMATION ---
+        // Changed from 0.03 to 0.015 for a slower, ~2-second animation.
+        const initialAnimationSpeedFactor = 0.015; 
 
+        let clickStartPos = { x: 0, y: 0 }; 
         let initialPinchDistance = 0;
         let lastTouchX = 0;
         let lastTouchY = 0;
@@ -423,24 +427,47 @@
             if(canvas) canvas.style.transform = `translate(${currentX}px, ${currentY}px) scale(${scale})`;
         }
         
+        let animationFrameId = null;
+        let isInitialAnimation = true; // Flag to track the initial animation phase
+
         function animationLoop() {
-            currentX += (targetX - currentX) * easingFactor;
-            currentY += (targetY - currentY) * easingFactor;
-            scale += (targetScale - scale) * easingFactor;
+            let currentEasing;
             
-            if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
-            if (Math.abs(targetY - currentY) < 0.1) currentY = targetY;
-            if (Math.abs(targetScale - scale) < 0.001) scale = targetScale;
+            // Check if initial animation should be running
+            if (isInitialAnimation) {
+                currentEasing = initialAnimationSpeedFactor;
+                // If we've reached the target, stop the initial animation mode
+                if (Math.abs(targetScale - scale) < 0.001) {
+                    isInitialAnimation = false;
+                }
+            } else {
+                currentEasing = easingFactor;
+            }
+
+            currentX += (targetX - currentX) * currentEasing;
+            currentY += (targetY - currentY) * currentEasing;
+            scale += (targetScale - scale) * currentEasing;
+            
+            if (!isInitialAnimation) {
+                if (Math.abs(targetX - currentX) < 0.1) currentX = targetX;
+                if (Math.abs(targetY - currentY) < 0.1) currentY = targetY;
+                if (Math.abs(targetScale - scale) < 0.001) scale = targetScale;
+            }
             
             applyTransform();
             renderVisiblePosters();
-            requestAnimationFrame(animationLoop);
+            animationFrameId = requestAnimationFrame(animationLoop);
         }
         
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initialize);
-        } else {
+        function start() {
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
             initialize();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', start);
+        } else {
+            start();
         }
     </script>
 </body>
